@@ -16,6 +16,7 @@ namespace Perforce
         private const String MISC_CATEGORY = "Misc Settings";
         private String userName = "";
         private String password = "";
+        private Boolean ticketBasedAuth = false;
         private String client = "";
         private String diffProgram = "";
         private Boolean silentOpenForEdit = true;
@@ -39,6 +40,16 @@ namespace Perforce
         {
             get { return password; }
             set { password = value; }
+        }
+
+        [Category(PERFORCE_CATEGORY)]
+        [DisplayName("Ticket-based authentication")]
+        [Description("Use Perforce tickets rather than sending your password with every command.")]
+        [DefaultValue(false)]
+        public Boolean TicketBasedAuth
+        {
+            get { return ticketBasedAuth; }
+            set { ticketBasedAuth = value; }
         }
 
         [Category(PERFORCE_CATEGORY)]

@@ -375,13 +375,74 @@ namespace Perforce
         #endregion
 
         #region Perforce Functionality
+        private string PerforceGetTicket()
+        {
+            Process proc = new Process();
+            proc.StartInfo.CreateNoWindow = true;
+            proc.StartInfo.UseShellExecute = false;
+            proc.StartInfo.RedirectStandardOutput = true;
+            proc.StartInfo.RedirectStandardError = true;
+
+            proc.StartInfo.Arguments = "/C echo " + settingObject.Password + "|p4 login -p";
+            proc.StartInfo.FileName = "cmd";
+
+            TraceManager.Add(" " + proc.StartInfo.Arguments, (Int32)TraceType.ProcessStart);
+            proc.Start();
+            proc.WaitForExit();
+            if (!proc.StandardOutput.EndOfStream)
+            {
+                string output = proc.StandardOutput.ReadToEnd();
+                TraceManager.Add("Operation Successful: " + output);
+                string[] outputMsgs = output.Split('\n');                
+                string ticket = Array.FindLast(outputMsgs, s => s.Trim() != "" && s.IndexOf(':') < 0);
+                if (ticket == null)
+                    return "";
+                return ticket.Trim();
+            }
+            else
+            {
+                string output = proc.StandardError.ReadToEnd();
+                TraceManager.Add("Operation Failed: " + output);
+                string[] outputMsgs = output.Split('\n');
+                foreach (string msg in outputMsgs)
+                {
+                    if (msg.Trim() == "")
+                        continue;
+
+                    int lastSlash = msg.LastIndexOf('\\');
+                    if (lastSlash < 0)
+                        lastSlash = msg.LastIndexOf('/');
+
+                    string relevantInfo = msg.Substring(lastSlash + 1);
+                    MessageBox.Show(relevantInfo, "Perforce Output", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }                
+            }
+            return "";
+        }
+        
         private string GetGlobalArguments()
         {
             string arguments = "";
             if (settingObject.UserName != "")
                 arguments += " -u " + settingObject.UserName;
             if (settingObject.Password != "")
-                arguments += " -P " + settingObject.Password;
+            {
+                if (settingObject.TicketBasedAuth)
+                {
+                    string ticket = PerforceGetTicket();
+                    if (ticket == "")
+                    {
+                        string message = "The plugin did not receive an authentication ticket from Perforce. " +
+                        "This most likely means your Perforce password is incorrect.";
+                        TraceManager.Add(message);
+                    }
+                    else
+                        arguments += " -P " + ticket;
+                }
+                else
+                    arguments += " -P " + settingObject.Password;                
+            }
+
             if (settingObject.Client != "")
                 arguments += " -c " + settingObject.Client;
             return arguments;
@@ -656,23 +717,23 @@ namespace Perforce
 
         private void attemptLogin(EventHandler callBack)
         {
-            string message = "The plugin did not receive a response from Perforce. " +
-            "This is likely due to the fact that your session is expired. Would you like to attempt to login?" +
-            "\n\nSet your login credentials in the \"Perforce\" tab in Settings to have this done automatically.";
-            DialogResult res = MessageBox.Show(message, "Perforce Error", MessageBoxButtons.YesNo);
-            if (res == DialogResult.Yes)
-            {
-                TraceManager.Add(" " + "p4 login", (Int32)TraceType.ProcessStart);
-                Process proc = new Process();
+                string message = "The plugin did not receive a response from Perforce. " +
+                "This is likely due to the fact that your session is expired. Would you like to attempt to login?" +
+                "\n\nSet your login credentials in the \"Perforce\" tab in Settings to have this done automatically.";
+                DialogResult res = MessageBox.Show(message, "Perforce Error", MessageBoxButtons.YesNo);
+                if (res == DialogResult.Yes)
+                {
+                    TraceManager.Add(" " + "p4 login", (Int32)TraceType.ProcessStart);
+                    Process proc = new Process();
 
-                proc.StartInfo.Arguments = "/C " + "p4 login";
-                proc.StartInfo.FileName = "cmd";
+                    proc.StartInfo.Arguments = "/C " + "p4 login";
+                    proc.StartInfo.FileName = "cmd";
 
-                proc.Start();
-                proc.WaitForExit();
-                callBack.Invoke(null, new DoNotAskAgainEventArgs());
+                    proc.Start();
+                    proc.WaitForExit();
+                    callBack.Invoke(null, new DoNotAskAgainEventArgs());
+                }
             }
-        }
 
         private class DoNotAskAgainEventArgs : EventArgs
         { }
