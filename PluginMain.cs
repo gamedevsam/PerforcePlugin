@@ -717,6 +717,14 @@ namespace Perforce
 
         private void attemptLogin(EventHandler callBack)
         {
+
+            if (settingObject.Password != "" && settingObject.UserName != "")
+            {
+                string message = "The plugin was unable to complete the operation using your Perforce credentials.";
+                MessageBox.Show(message, "Perforce Error", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
                 string message = "The plugin did not receive a response from Perforce. " +
                 "This is likely due to the fact that your session is expired. Would you like to attempt to login?" +
                 "\n\nSet your login credentials in the \"Perforce\" tab in Settings to have this done automatically.";
@@ -734,6 +742,7 @@ namespace Perforce
                     callBack.Invoke(null, new DoNotAskAgainEventArgs());
                 }
             }
+        }
 
         private class DoNotAskAgainEventArgs : EventArgs
         { }
