@@ -488,27 +488,7 @@ namespace Perforce
                 else
                 {
                     string output = proc.StandardError.ReadToEnd();
-                    // If it was a password related problem it's very likely that the user's ticket has
-                    // expired. Prompt them if they want to sign in.
-                    if (output.Contains("P4PASSWD"))
-                        attemptLogin(new EventHandler(onRevertFile));
-                    else
-                    {
-                        TraceManager.Add("Operation Failed: " + output);
-                        string[] outputMsgs = output.Split('\n');
-                        foreach (string msg in outputMsgs)
-                        {
-                            if (msg.Trim() == "")
-                                continue;
-
-                            int lastSlash = msg.LastIndexOf('\\');
-                            if (lastSlash < 0)
-                                lastSlash = msg.LastIndexOf('/');
-
-                            string relevantInfo = msg.Substring(lastSlash + 1);
-                            MessageBox.Show(relevantInfo, "Perforce Output", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        }
-                    }
+                    handlePerforceError(output, new EventHandler(onEditFile));
                 }
             }
         }
@@ -612,27 +592,7 @@ namespace Perforce
                 else
                 {
                     string output = proc.StandardError.ReadToEnd();
-                    // If it was a password related problem it's very likely that the user's ticket has
-                    // expired. Prompt them if they want to sign in.
-                    if (output.Contains("P4PASSWD"))
-                        attemptLogin(new EventHandler(onAddFile));
-                    else
-                    {
-                        TraceManager.Add("Operation Failed: " + output);
-                        string[] outputMsgs = output.Split('\n');
-                        foreach (string msg in outputMsgs)
-                        {
-                            if (msg.Trim() == "")
-                                continue;
-
-                            int lastSlash = msg.LastIndexOf('\\');
-                            if (lastSlash < 0)
-                                lastSlash = msg.LastIndexOf('/');
-
-                            string relevantInfo = msg.Substring(lastSlash + 1);
-                            MessageBox.Show(relevantInfo, "Perforce Output", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        }
-                    }
+                    handlePerforceError(output, new EventHandler(onAddFile));
                 }
             }
   
@@ -690,27 +650,34 @@ namespace Perforce
                 else
                 {
                     string output = proc.StandardError.ReadToEnd();
-                    // If it was a password related problem it's very likely that the user's ticket has
-                    // expired. Prompt them if they want to sign in.
-                    if (output.Contains("P4PASSWD"))
-                        attemptLogin(new EventHandler(onRevertFile));
-                    else
-                    {
-                        TraceManager.Add("Operation Failed: " + output);
-                        string[] outputMsgs = output.Split('\n');
-                        foreach (string msg in outputMsgs)
-                        {
-                            if (msg.Trim() == "")
-                                continue;
+                    handlePerforceError(output, new EventHandler(onRevertFile));
+                }
+            }
+        }
 
-                            int lastSlash = msg.LastIndexOf('\\');
-                            if (lastSlash < 0)
-                                lastSlash = msg.LastIndexOf('/');
+        private void handlePerforceError(string output, EventHandler callback)
+        {
+            // If it was a password related problem it's very likely that the user's ticket has
+            // expired. Prompt them if they want to sign in.
+            if (output.Contains("P4PASSWD"))
+            {
+                attemptLogin(callback);
+            }
+            else
+            {
+                TraceManager.Add("Operation Failed: " + output);
+                string[] outputMsgs = output.Split('\n');
+                foreach (string msg in outputMsgs)
+                {
+                    if (msg.Trim() == "")
+                        continue;
 
-                            string relevantInfo = msg.Substring(lastSlash + 1);
-                            MessageBox.Show(relevantInfo, "Perforce Output", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        }
-                    }                     
+                    int lastSlash = msg.LastIndexOf('\\');
+                    if (lastSlash < 0)
+                        lastSlash = msg.LastIndexOf('/');
+
+                    string relevantInfo = msg.Substring(lastSlash + 1);
+                    MessageBox.Show(relevantInfo, "Perforce Output", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
         }
