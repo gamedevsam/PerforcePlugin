@@ -3,7 +3,7 @@ PerforcePlugin for FlashDevelop
 
 Build instructions:
 
-1. Obtain FlashDevelop source code (SVN only, sorry): https://code.google.com/p/flashdevelop/source/checkout
+1. Obtain FlashDevelop source code: https://github.com/fdorg/flashdevelop
 2. Compile solution
 2. Add Perforce.csproj to FlashDevelop.sln
 3. Go to project properties for Perforce project:
